@@ -12,6 +12,7 @@ export default function AuthPage() {
   const [password, setPassword] = useState('');
   const router = useRouter();
 
+  // ---------------- HANDLE SUBMIT ----------------
   const handleSubmit = () => {
     if (!email || !password) return alert('Please fill required fields');
 
@@ -22,9 +23,8 @@ export default function AuthPage() {
     );
 
     if (isLogin) {
-      // ---------------- LOGIN ----------------
+      // -------- LOGIN --------
       const users = JSON.parse(localStorage.getItem('users') || '[]');
-
       const existingUser = users.find(
         (user: any) => user.email === email && user.password === password
       );
@@ -36,10 +36,10 @@ export default function AuthPage() {
       } else {
         alert('Invalid Credentials ❌');
       }
+
     } else {
-      // ---------------- SIGNUP WITH OTP ----------------
-      if (!username || !phone)
-        return alert('Please fill all signup fields');
+      // -------- SIGNUP WITH OTP --------
+      if (!username || !phone) return alert('Please fill all signup fields');
 
       const users = JSON.parse(localStorage.getItem('users') || '[]');
       const userExists = users.find((user: any) => user.email === email);
@@ -59,11 +59,11 @@ export default function AuthPage() {
       );
 
       alert(`Your OTP is: ${generatedOtp}`); // demo only
-
       router.push('/otp');
     }
   };
 
+  // ---------------- GSAP ANIMATION ----------------
   useEffect(() => {
     gsap.fromTo(
       ".feature-left",
@@ -88,6 +88,7 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen flex">
+      {/* LEFT SIDE IMAGE */}
       <div className="hidden md:flex w-1/2 relative bg-gradient-to-br from-blue-600 to-blue-800 text-white items-center justify-center p-12 overflow-hidden">
         <div className="relative text-center space-y-6">
           <h1 className="text-4xl font-bold">
@@ -117,6 +118,7 @@ export default function AuthPage() {
         </div>
       </div>
 
+      {/* RIGHT SIDE FORM */}
       <div className="w-full md:w-1/2 flex items-center justify-center bg-blue-50 px-6">
         <div className="auth-box bg-white p-10 rounded-2xl shadow-xl max-w-md w-full">
           <h2 className="text-3xl font-bold text-center text-blue-700 mb-6">

@@ -34,7 +34,6 @@ export default function BookPage() {
     );
   }
 
-  // Handle booking form submission and store in localStorage
   const handleBooking = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
@@ -63,7 +62,7 @@ export default function BookPage() {
       bookedAt: new Date().toISOString(),
     });
 
-    // Save back to localStorage
+    // Save to localStorage
     localStorage.setItem('appointments', JSON.stringify(appointments));
 
     // Confirmation alert
@@ -80,7 +79,7 @@ export default function BookPage() {
         {/* LEFT SIDE - IMAGE + FLOATING BOXES */}
         <div className="relative bg-blue-600 flex items-center justify-center p-10">
           <img
-            src={ 'https://i.pinimg.com/736x/3d/e0/d0/3de0d0e20ac15701fdcf4d674f07c661.jpg'}
+            src={'https://i.pinimg.com/736x/3d/e0/d0/3de0d0e20ac15701fdcf4d674f07c661.jpg'}
             className="w-80 h-96 object-cover rounded-3xl shadow-2xl relative z-10"
           />
 
