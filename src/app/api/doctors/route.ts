@@ -17,6 +17,37 @@ export interface Doctor {
   bio: string;
 }
 
+ export   interface Appointment {
+  doctorId: number;
+  doctorName: string;
+  specialty: string;
+  hospital: string;
+  patientName: string;
+  patientEmail: string;
+  appointmentDate: string;
+  appointmentTime: string;
+  bookedAt: string;
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 // Hardcoded doctor data
 export const doctors: Doctor[] = [
  

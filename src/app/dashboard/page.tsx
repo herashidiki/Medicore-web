@@ -1,7 +1,10 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 import { useRouter } from 'next/navigation';
+import gsap from 'gsap';
+import { FaHeart, FaSignOutAlt } from 'react-icons/fa';
+import { FaUserMd, FaHospital, FaClock, FaStar, FaPills, FaMapMarkerAlt } from "react-icons/fa";
 
 interface Doctor {
   id: number;
@@ -24,7 +27,10 @@ export default function DashboardPage() {
   const [filtered, setFiltered] = useState<Doctor[]>([]);
   const [search, setSearch] = useState('');
   const [activeTag, setActiveTag] = useState<string | null>(null);
+  const [showLogoutPopup, setShowLogoutPopup] = useState(false);
+
   const router = useRouter();
+  const bannerRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     fetch('/api/doctors')
@@ -55,122 +61,210 @@ export default function DashboardPage() {
     setFiltered(filteredData);
   }, [search, doctors, activeTag]);
 
-  // Get unique specialties for tags
+  // Fixed GSAP animation targeting only tags
+  useEffect(() => {
+    if (!bannerRef.current) return;
+
+    const items = Array.from(bannerRef.current.querySelectorAll("span"));
+
+    gsap.set(items, { opacity: 0, y: 40, scale: 0.8 });
+
+    const tl = gsap.timeline({ repeat: -1, repeatDelay: 0.3 });
+
+    items.forEach((item) => {
+      tl.to(item, {
+        opacity: 1,
+        y: 0,
+        scale: 1,
+        duration: 0.5,
+        ease: "back.out(1.7)"
+      })
+      .to(item, {
+        y: -40,
+        opacity: 0,
+        duration: 0.5,
+        delay: 0.8,
+        ease: "power1.in"
+      });
+    });
+  }, []);
+
+  const handleLogout = () => {
+    localStorage.clear();
+    router.push('/login');
+  };
+
   const specialties = [...new Set(doctors.map(doc => doc.specialty))];
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-white p-8">
+    <div className="flex min-h-screen bg-[#f5f7fb]">
 
-      {/* Header */}
-      <div className="text-center mb-10">
-        <h1 className="text-4xl font-bold text-blue-700 mb-3">
-          Doctors Dashboard
-        </h1>
-        <p className="text-gray-500">
-          Find and book appointments with top medical professionals
-        </p>
+      {/* SIDEBAR */}
+      <div className="w-64 bg-white shadow-lg p-6 flex flex-col">
+        <div className="flex items-center gap-3 mb-10">
+          <div className="w-10 h-10 rounded-full bg-blue-600 text-white flex items-center justify-center font-bold text-lg">
+            M
+          </div>
+          <span className="font-bold text-gray-700 text-lg">
+            MedPortal
+          </span>
+        </div>
+
+        <nav className="flex flex-col gap-4">
+          <button className="text-left px-4 py-3 rounded-lg bg-blue-50 text-blue-600 font-semibold">
+            🏥 Dashboard
+          </button>
+
+          <button
+            onClick={() => router.push('/appointeded')}
+            className="text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition"
+          >
+            📅 Appointments
+          </button>
+
+          <button className="text-left px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-100 transition">
+            ⚙ Settings
+          </button>
+        </nav>
+
+        <div className="mt-auto pt-10">
+          <button
+            onClick={() => setShowLogoutPopup(true)}
+            className="w-full flex items-center gap-2 px-4 py-3 rounded-lg text-gray-600 hover:bg-red-50 transition font-medium"
+          >
+            <FaSignOutAlt />
+            Logout
+          </button>
+
+          <div className="text-sm text-gray-400 mt-6">
+            © 2026 MedPortal
+          </div>
+        </div>
       </div>
 
-      {/* Search */}
-      {/* <div className="max-w-6xl mx-auto mb-6">
-        <input
-          type="text"
-          placeholder="Search by doctor name or specialty..."
-          value={search}
-          onChange={e => {
-            setSearch(e.target.value);
-            setActiveTag(null);
-          }}
-          className="w-full border px-4 py-3 rounded-xl shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500"
-        />
-      </div> */}
+      {/* MAIN CONTENT */}
+      <div className="flex-1 p-10">
 
-      <div className="max-w-6xl mx-auto mb-6 relative">
-  <input
-    type="text"
-    placeholder="Search doctors by name or specialty..."
-    value={search}
-    onChange={e => {
-      setSearch(e.target.value);
-      setActiveTag(null);
-    }}
-    className="w-full px-4 pl-12 py-3 rounded-xl shadow-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-400 transition placeholder-gray-400 text-gray-700"
-  />
-  <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-gray-400">
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      className="h-5 w-5"
-      fill="none"
-      viewBox="0 0 24 24"
-      stroke="currentColor"
-      strokeWidth={2}
-    >
-      <path
-        strokeLinecap="round"
-        strokeLinejoin="round"
-        d="M21 21l-4.35-4.35M17 11a6 6 0 11-12 0 6 6 0 0112 0z"
-      />
-    </svg>
-  </div>
-</div>
+        {/* ================= BANNER ================= */}
+        <div className="mb-8 flex justify-between items-center p-8 rounded-3xl shadow-xl relative overflow-hidden">
 
-      {/* Specialty Tags */}
-      <div className="max-w-6xl mx-auto flex flex-wrap gap-3 mb-8">
-        {specialties.map(spec => (
-          <button
-            key={spec}
-            onClick={() => {
-              setActiveTag(spec);
-              setSearch('');
-            }}
-            className={`px-4 py-2 rounded-full text-sm font-medium transition ${
-              activeTag === spec
-                ? 'bg-blue-600 text-white'
-                : 'bg-white border border-blue-200 text-blue-600 hover:bg-blue-50'
-            }`}
-          >
-            {spec}
-          </button>
-        ))}
+          {/* Background */}
+          <div className="absolute inset-0 bg-white"></div>
+          <div className="absolute inset-0 bg-blue-500 clip-slash opacity-95"></div>
 
-        {activeTag && (
-          <button
-            onClick={() => setActiveTag(null)}
-            className="px-4 py-2 rounded-full text-sm bg-red-100 text-red-600"
-          >
-            Clear Filter
-          </button>
-        )}
-      </div>
+          {/* Floating icons */}
+          <div className="absolute top-4 left-6 text-4xl text-blue-100 opacity-40">
+            <FaUserMd />
+          </div>
+          <div className="absolute bottom-4 left-10 text-4xl text-blue-100 opacity-40">
+            <FaMapMarkerAlt />
+          </div>
+          <div className="absolute top-6 right-10 text-4xl text-white opacity-30">
+            <FaPills />
+          </div>
+          <div className="absolute bottom-6 right-16 text-4xl text-white opacity-30">
+            <FaHospital />
+          </div>
 
-      {/* Doctor Cards */}
-      <div className="max-w-6xl mx-auto grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-8">
-        {filtered.map(doc => (
-          <div
-            key={doc.id}
-            className="bg-white p-6 rounded-2xl shadow-md hover:shadow-xl transition duration-300 flex flex-col"
-          >
-            <div className="flex justify-center mb-4">
-              <img
-                src={"https://i.pinimg.com/736x/f0/3f/be/f03fbe3f11e73afee540301ad0de3bfc.jpg"}
-                className="w-24 h-24 rounded-full object-cover border-4 border-blue-100"
-              />
+          {/* Animated Tags (Left Content) */}
+          <div className="relative z-10 max-w-xl" ref={bannerRef}>
+            <div className="grid grid-cols-2 gap-5">
+              {[
+                { icon: <FaUserMd />, text: "Expert Consultations", color: "bg-blue-50 text-blue-700" },
+                { icon: <FaPills />, text: "Medicines Delivered", color: "bg-green-50 text-green-700" },
+                { icon: <FaHospital />, text: "Trusted Hospitals", color: "bg-purple-50 text-purple-700" },
+                { icon: <FaStar />, text: "Top Rated Doctors", color: "bg-pink-50 text-pink-700" },
+                { icon: <FaMapMarkerAlt />, text: "Nearby Clinics", color: "bg-teal-50 text-teal-700" },
+                { icon: <FaClock />, text: "Flexible Scheduling", color: "bg-orange-50 text-orange-700" },
+              ].map((item, index) => (
+                <span
+                  key={item.text}
+                  className={`flex items-center gap-2 px-4 py-3 rounded-full font-semibold text-sm shadow-md animate-bounce-slow ${item.color}`}
+                  style={{ animationDelay: `${index * 0.15}s` }}
+                >
+                  {item.icon} {item.text}
+                </span>
+              ))}
             </div>
+          </div>
 
-            <h2 className="text-center text-xl font-bold text-gray-800">
-              {doc.name}
+          {/* Branding + Image */}
+          <div className="flex flex-col items-center text-center px-6 relative z-10 text-white">
+            <h2 className="text-3xl font-bold">
+              MedPortal
             </h2>
-
-            <p className="text-center text-blue-600 font-semibold">
-              {doc.specialty}
+            <p className="text-white/80 text-sm mt-1">
+              Your Health, Our Priority
             </p>
+            <img
+              src="https://i.pinimg.com/736x/c1/9e/c8/c19ec80143f177f24b31d5f35d25269b.jpg"
+              alt="Medical Illustration"
+              className="mt-4 w-72 rounded-3xl drop-shadow-2xl"
+            />
+          </div>
+        </div>
 
-            <p className="text-center text-gray-500 text-sm">
-              {doc.hospital}
-            </p>
+        {/* Header */}
+        <div className="flex justify-between items-center mb-8">
+          <h1 className="text-3xl font-bold text-gray-800">
+            Doctors Dashboard
+          </h1>
 
-            {/* Availability Badge */}
-            <div className="flex justify-center mt-3">
+          <div className="flex items-center gap-4">
+            <input
+              type="text"
+              placeholder="Search doctors..."
+              value={search}
+              onChange={e => {
+                setSearch(e.target.value);
+                setActiveTag(null);
+              }}
+              className="px-4 py-2 rounded-lg border border-gray-200 shadow-sm focus:ring-2 focus:ring-blue-500 outline-none"
+            />
+            <div className="w-10 h-10 rounded-full bg-gray-200"></div>
+          </div>
+        </div>
+
+        {/* Specialty Tags */}
+        <div className="flex flex-wrap gap-3 mb-8">
+          {specialties.map(spec => (
+            <button
+              key={spec}
+              onClick={() => {
+                setActiveTag(spec);
+                setSearch('');
+              }}
+              className={`px-4 py-2 rounded-full text-sm font-medium transition ${
+                activeTag === spec
+                  ? 'bg-blue-600 text-white'
+                  : 'bg-white border border-gray-200 text-gray-600 hover:bg-gray-50'
+              }`}
+            >
+              {spec}
+            </button>
+          ))}
+        </div>
+
+        {/* Doctor Cards */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filtered.map(doc => (
+            <div
+              key={doc.id}
+              className="bg-white p-6 rounded-2xl shadow hover:shadow-xl transition"
+            >
+              <div className="flex items-center gap-4 mb-4">
+                <img
+                  src="https://i.pinimg.com/736x/f0/3f/be/f03fbe3f11e73afee540301ad0de3bfc.jpg"
+                  className="w-16 h-16 rounded-full object-cover"
+                />
+                <div>
+                  <h2 className="font-bold text-gray-800">{doc.name}</h2>
+                  <p className="text-blue-600 text-sm">{doc.specialty}</p>
+                </div>
+              </div>
+
+              <p className="text-gray-500 text-sm mb-2">{doc.hospital}</p>
+
               <span
                 className={`px-3 py-1 text-xs rounded-full font-semibold ${
                   doc.availability === 'Available'
@@ -182,34 +276,71 @@ export default function DashboardPage() {
               >
                 {doc.availability}
               </span>
-            </div>
 
-            {/* Buttons */}
-            <div className="mt-auto flex flex-col gap-3 mt-6">
+              {/* Buttons */}
+              <div className="mt-4 flex flex-col gap-2">
+                <button
+                  onClick={() => router.push(`/detail/${doc.id}`)}
+                  className="border border-blue-600 text-blue-600 py-2 rounded-lg hover:bg-blue-50 transition"
+                >
+                  View Details
+                </button>
+
+                <button
+                  disabled={doc.availability !== 'Available'}
+                  onClick={() => router.push(`/book/${doc.id}`)}
+                  className={`py-2 rounded-lg font-semibold transition ${
+                    doc.availability === 'Available'
+                      ? 'bg-blue-600 text-white hover:bg-blue-700'
+                      : 'bg-gray-300 text-gray-600 cursor-not-allowed'
+                  }`}
+                >
+                  {doc.availability === 'Available'
+                    ? 'Book Appointment'
+                    : 'Not Available'}
+                </button>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* LOGOUT POPUP */}
+      {showLogoutPopup && (
+        <div className="fixed inset-0 bg-black/20 backdrop-blur-md flex items-center justify-center z-50">
+          <div className="bg-[#f5f7fb] p-8 rounded-2xl shadow-2xl w-96 text-center border border-gray-200">
+            <FaHeart className="text-gray-400 text-4xl mx-auto mb-4" />
+            <h2 className="text-xl font-bold text-gray-800 mb-4">
+              Confirm Logout
+            </h2>
+            <p className="text-gray-600 mb-6">
+              Are you sure you want to logout?
+            </p>
+
+            <div className="flex justify-center gap-4">
               <button
-                onClick={() => router.push(`/detail/${doc.id}`)}
-                className="border border-blue-600 text-blue-600 py-2 rounded-lg hover:bg-blue-50 transition"
+                onClick={() => setShowLogoutPopup(false)}
+                className="px-6 py-2 rounded-lg border border-gray-300 text-gray-600 hover:bg-gray-100 transition"
               >
-                View Details
+                Cancel
               </button>
 
               <button
-                disabled={doc.availability !== 'Available'}
-                onClick={() => router.push(`/book/${doc.id}`)}
-                className={`py-2 rounded-lg font-semibold transition ${
-                  doc.availability === 'Available'
-                    ? 'bg-blue-600 text-white hover:bg-blue-700'
-                    : 'bg-gray-300 text-gray-600 cursor-not-allowed'
-                }`}
+                onClick={handleLogout}
+                className="px-6 py-2 rounded-lg bg-red-500 text-white hover:bg-red-600 transition"
               >
-                {doc.availability === 'Available'
-                  ? 'Book Appointment'
-                  : 'Not Available'}
+                Logout
               </button>
             </div>
           </div>
-        ))}
-      </div>
+        </div>
+      )}
+
+      <style jsx>{`
+        .clip-slash {
+          clip-path: polygon(40% 0%, 100% 0%, 100% 100%, 60% 100%);
+        }
+      `}</style>
     </div>
   );
 }
